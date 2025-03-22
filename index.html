@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>BusPath - Haryana Bus Tracker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: #f0f2f5;
+        }
+
+        #splashScreen {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, #1a237e, #0d47a1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            color: white;
+            text-align: center;
+        }
+
+        .splash-logo {
+            font-size: 80px;
+            margin-bottom: 20px;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-30px); }
+            60% { transform: translateY(-15px); }
+        }
+
+        #mainApp {
+            display: none;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #1a237e;
+        }
+
+        .search-container {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        select {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            color: #333;
+            background: #f8f9fa;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: #1a237e;
+        }
+
+        .search-btn {
+            width: 100%;
+            padding: 12px;
+            background: #1a237e;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .search-btn:hover {
+            background: #0d47a1;
+            transform: translateY(-2px);
+        }
+
+        #map {
+            height: 400px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .bus-results-container {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .route-title {
+            color: #1a237e;
+            margin-bottom: 20px;
+            font-size: 20px;
+            font-weight: 500;
+        }
+
+        .bus-card {
+            border: 1px solid #eee;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            transition: all 0.3s;
+        }
+
+        .bus-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .bus-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .bus-number {
+            font-weight: 600;
+            color: #1a237e;
+        }
+
+        .bus-type {
+            background: #e3f2fd;
+            color: #1a237e;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+
+        .time-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .track-btn {
+            width: 100%;
+            padding: 10px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+
+        .track-btn:hover {
+            background: #43A047;
+        }
+
+        .contact-section {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .contact-reveal-btn {
+            background: #1a237e;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s;
+        }
+
+        #contact-number {
+            margin-top: 20px;
+            display: none;
+        }
+
+        .contact-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            margin-top: 15px;
+            transition: all 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <div id="splashScreen">
+        <div>
+            <div class="splash-logo">🚌</div>
+            <h1>Welcome to BusPath</h1>
+        </div>
+    </div>
+
+    <div id="mainApp">
+        <div class="header">
+            <h1>BusPath - Haryana Bus Tracker</h1>
+        </div>
+
+        <div class="search-container">
+            <select id="sourceDistrict">
+                <option value="">Select Source District</option>
+                <option value="Ambala">Ambala</option>
+                <option value="Bhiwani">Bhiwani</option>
+                <option value="Charkhi Dadri">Charkhi Dadri</option>
+                <option value="Faridabad">Faridabad</option>
+                <option value="Fatehabad">Fatehabad</option>
+                <option value="Gurugram">Gurugram</option>
+                <option value="Hisar">Hisar</option>
+                <option value="Jhajjar">Jhajjar</option>
+                <option value="Jind">Jind</option>
+                <option value="Kaithal">Kaithal</option>
+                <option value="Karnal">Karnal</option>
+                <option value="Kurukshetra">Kurukshetra</option>
+                <option value="Mahendragarh">Mahendragarh</option>
+                <option value="Nuh">Nuh</option>
+                <option value="Palwal">Palwal</option>
+                <option value="Panchkula">Panchkula</option>
+                <option value="Panipat">Panipat</option>
+                <option value="Rewari">Rewari</option>
+                <option value="Rohtak">Rohtak</option>
+                <option value="Sirsa">Sirsa</option>
+                <option value="Sonipat">Sonipat</option>
+                <option value="Yamunanagar">Yamunanagar</option>
+            </select>
+
+            <select id="destinationDistrict">
+                <option value="">Select Destination District</option>
+                <option value="Ambala">Ambala</option>
+                <option value="Bhiwani">Bhiwani</option>
+                <option value="Charkhi Dadri">Charkhi Dadri</option>
+                <option value="Faridabad">Faridabad</option>
+                <option value="Fatehabad">Fatehabad</option>
+                <option value="Gurugram">Gurugram</option>
+                <option value="Hisar">Hisar</option>
+                <option value="Jhajjar">Jhajjar</option>
+                <option value="Jind">Jind</option>
+                <option value="Kaithal">Kaithal</option>
+                <option value="Karnal">Karnal</option>
+                <option value="Kurukshetra">Kurukshetra</option>
+                <option value="Mahendragarh">Mahendragarh</option>
+                <option value="Nuh">Nuh</option>
+                <option value="Palwal">Palwal</option>
+                <option value="Panchkula">Panchkula</option>
+                <option value="Panipat">Panipat</option>
+                <option value="Rewari">Rewari</option>
+                <option value="Rohtak">Rohtak</option>
+                <option value="Sirsa">Sirsa</option>
+                <option value="Sonipat">Sonipat</option>
+                <option value="Yamunanagar">Yamunanagar</option>
+            </select>
+
+            <button class="search-btn" onclick="searchBuses()">
+                <i class="fas fa-search"></i> Search Buses
+            </button>
+        </div>
+
+        <div id="busResults"></div>
+        <div id="map"></div>
+
+        <div class="contact-section">
+            <h2>Need Help?</h2>
+            <button class="contact-reveal-btn" onclick="revealNumber()">
+                <i class="fas fa-phone"></i>
+                Click to Show Number
+            </button>
+            <div id="contact-number">
+                <div class="contact-info">
+                    <i class="fas fa-phone"></i>
+                    <span>9034075510</span>
+                </div>
+                <a href="tel:9034075510" class="contact-btn">
+                    <i class="fas fa-phone"></i>
+                    Call Now
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let map;
+        let busMarker;
+        let busPath;
+
+        window.onload = function() {
+            setTimeout(() => {
+                document.getElementById('splashScreen').style.display = 'none';
+                document.getElementById('mainApp').style.display = 'block';
+                initializeMap();
+            }, 2000);
+        };
+
+        function initializeMap() {
+            map = L.map('map').setView([29.0588, 76.0856], 8);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        }
+
+        function searchBuses() {
+            const source = document.getElementById('sourceDistrict').value;
+            const destination = document.getElementById('destinationDistrict').value;
+
+            if (!source || !destination) {
+                alert('Please select both source and destination districts');
+                return;
+            }
+
+            // Show dummy buses
+            const buses = [
+                {
+                    busNumber: 'HR01-1234',
+                    type: 'Volvo AC',
+                    departure: '06:00 AM',
+                    arrival: '08:30 AM',
+                    fare: '₹250',
+                    available: '32 seats'
+                },
+                {
+                    busNumber: 'HR01-5678',
+                    type: 'Regular',
+                    departure: '07:00 AM',
+                    arrival: '09:45 AM',
+                    fare: '₹150',
+                    available: '45 seats'
+                },
+                {
+                    busNumber: 'HR02-9012',
+                    type: 'AC Deluxe',
+                    departure: '08:00 AM',
+                    arrival: '10:30 AM',
+                    fare: '₹350',
+                    available: '28 seats'
+                }
+            ];
+
+            displayBuses(buses, source, destination);
+            showRouteOnMap(source, destination);
+        }
+
+        function displayBuses(buses, source, destination) {
+            const busResultsDiv = document.getElementById('busResults');
+            busResultsDiv.innerHTML = `
+                <div class="bus-results-container">
+                    <h3 class="route-title">${source} to ${destination}</h3>
+                    ${buses.map(bus => `
+                        <div class="bus-card">
+                            <div class="bus-header">
+                                <div class="bus-number">${bus.busNumber}</div>
+                                <span class="bus-type">${bus.type}</span>
+                            </div>
+                            <div class="time-info">
+                                <div>
+                                    <small>Departure</small>
+                                    <div>${bus.departure}</div>
+                                </div>
+                                <div>
+                                    <i class="fas fa-arrow-right"></i>
+                                </div>
+                                <div>
+                                    <small>Arrival</small>
+                                    <div>${bus.arrival}</div>
+                                </div>
+                            </div>
+                            <div class="time-info">
+                                <div>
+                                    <small>Fare</small>
+                                    <div>${bus.fare}</div>
+                                </div>
+                                <div>
+                                    <small>Available</small>
+                                    <div>${bus.available}</div>
+                                </div>
+                            </div>
+                            <button class="track-btn" onclick="trackBus('${bus.busNumber}')">
+                                <i class="fas fa-map-marker-alt"></i> Track Bus
+                            </button>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function showRouteOnMap(source, destination) {
+            const sourceCoords = getDistrictCoordinates(source);
+            const destCoords = getDistrictCoordinates(destination);
+
+            if (busPath) map.removeLayer(busPath);
+            if (busMarker) map.removeLayer(busMarker);
+
+            busPath = L.polyline([sourceCoords, destCoords], {
+                color: '#1a237e',
+                weight: 3
+            }).addTo(map);
+
+            const busIcon = L.divIcon({
+                html: '🚌',
+                className: 'bus-marker',
+                iconSize: [30, 30]
+            });
+
+            busMarker = L.marker(sourceCoords, {
+                icon: busIcon
+            }).addTo(map);
+
+            map.fitBounds(busPath.getBounds(), {
+                padding: [50, 50]
+            });
+        }
+
+        function getDistrictCoordinates(district) {
+            const coordinates = {
+                'Ambala': [30.3752, 76.7821],
+                'Bhiwani': [28.7975, 76.1322],
+                'Charkhi Dadri': [28.5917, 76.2769],
+                'Faridabad': [28.4089, 77.3178],
+                'Fatehabad': [29.5152, 75.4557],
+                'Gurugram': [28.4595, 77.0266],
+                'Hisar': [29.1492, 75.7217],
+                'Jhajjar': [28.6062, 76.6566],
+                'Jind': [29.3164, 76.3192],
+                'Kaithal': [29.8030, 76.3984],
+                'Karnal': [29.6857, 76.9905],
+                'Kurukshetra': [29.9695, 76.8783],
+                'Mahendragarh': [28.2744, 76.1498],
+                'Nuh': [28.1084, 77.0017],
+                'Palwal': [28.1487, 77.3320],
+                'Panchkula': [30.6942, 76.8606],
+                'Panipat': [29.3909, 76.9635],
+                'Rewari': [28.1920, 76.6190],
+                'Rohtak': [28.8955, 76.6066],
+                'Sirsa': [29.5321, 75.0318],
+                'Sonipat': [28.9931, 77.0151],
+                'Yamunanagar': [30.1290, 77.2674]
+            };
+            return coordinates[district] || [
+                28.5 + Math.random() * 1.5,
+                76 + Math.random() * 1.5
+            ];
+        }
+
+        function revealNumber() {
+            document.getElementById('contact-number').style.display = 'block';
+            document.querySelector('.contact-reveal-btn').style.display = 'none';
+        }
+
+        function trackBus(busNumber) {
+            alert(`Tracking bus ${busNumber}`);
+            // Add tracking functionality here
+        }
+    </script>
+</body>
+</html>
